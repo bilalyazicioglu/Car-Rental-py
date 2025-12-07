@@ -1,21 +1,17 @@
-# 🚗 Araç Kiralama Sistemi
+#  Araç Kiralama Sistemi
 
 Basit ve kullanışlı bir araç kiralama yönetim uygulaması. Python ve Tkinter ile geliştirilmiştir.
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![Tkinter](https://img.shields.io/badge/GUI-Tkinter-green.svg)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+##  Özellikler
 
-## ✨ Özellikler
+-  Araç ekleme, düzenleme ve silme
+-  Kiralama işlemleri (başlatma/iade)
+-  Anlık istatistikler (müsait, kirada, bakımda)
+-  JSON tabanlı veri saklama
+-  Modern ve kullanıcı dostu arayüz
+-  Durum bazlı filtreleme
 
-- 📋 Araç ekleme, düzenleme ve silme
-- 🔑 Kiralama işlemleri (başlatma/iade)
-- 📊 Anlık istatistikler (müsait, kirada, bakımda)
-- 💾 JSON tabanlı veri saklama
-- 🎨 Modern ve kullanıcı dostu arayüz
-- 🔍 Durum bazlı filtreleme
-
-## 📦 Kurulum
+##  Kurulum
 
 1. Repository'yi klonlayın:
 ```bash
@@ -35,22 +31,22 @@ python main.py
 
 > **Not:** Bu proje sadece Python standart kütüphanelerini kullanır. Ekstra kurulum gerekmez!
 
-## 🚀 Kullanım
+##  Kullanım
 
 ### Araç Eklemek
 1. Sol paneldeki form alanlarını doldurun
-2. "➕ Araç Ekle" butonuna tıklayın
+2. "Araç Ekle" butonuna tıklayın
 
 ### Kiralama Başlatmak
 1. Listeden müsait bir araç seçin
-2. "🔑 Kiralama Başlat" butonuna tıklayın
+2. "Kiralama Başlat" butonuna tıklayın
 3. Müşteri adı ve tarihleri girin
 
 ### Araç İade Almak
 1. Kirada olan aracı seçin
-2. "↩️ Aracı İade Et" butonuna tıklayın
+2. "Aracı İade Et" butonuna tıklayın
 
-## 📁 Proje Yapısı
+##  Proje Yapısı
 
 ```
 Car-Rental-py/
@@ -62,22 +58,23 @@ Car-Rental-py/
 └── README.md
 ```
 
-## 🛠️ Teknolojiler
+##  Teknolojiler
 
 - **Python 3** - Programlama dili
 - **Tkinter** - GUI framework
 - **JSON** - Veri depolama
 
-## 📝 Lisans
+##  Lisans
 
 Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır.
 
-## 👤 Geliştirici
+##  Geliştiriciler
 
 **Bilal Yazıcıoğlu**
 
 - GitHub: [@bilalyazicioglu](https://github.com/bilalyazicioglu)
 
----
+**Ali Talha Yurtseven**
 
-⭐ Beğendiyseniz yıldız vermeyi unutmayın!
+- GitHub: [@alitalhq](https://github.com/alitalhq)
+---
