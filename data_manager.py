@@ -1,8 +1,7 @@
-import json
+import sqlite3
 import os
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass
 from typing import Optional, List
-from datetime import datetime
 
 
 @dataclass
@@ -15,22 +14,6 @@ class Vehicle:
     kiralayan: Optional[str] = None
     baslangic_tarihi: Optional[str] = None
     bitis_tarihi: Optional[str] = None
-    
-    def to_dict(self) -> dict:
-        return asdict(self)
-    
-    @classmethod
-    def from_dict(cls, data: dict) -> 'Vehicle':
-        return cls(
-            plaka=data.get('plaka', ''),
-            marka=data.get('marka', ''),
-            model=data.get('model', ''),
-            ucret=float(data.get('ucret', 0)),
-            durum=data.get('durum', 'müsait'),
-            kiralayan=data.get('kiralayan'),
-            baslangic_tarihi=data.get('baslangic_tarihi'),
-            bitis_tarihi=data.get('bitis_tarihi')
-        )
 
 
 @dataclass
@@ -41,135 +24,132 @@ class RentalHistory:
     bitis_tarihi: str
     toplam_ucret: float
     iade_tarihi: Optional[str] = None
-    
-    def to_dict(self) -> dict:
-        return asdict(self)
-    
-    @classmethod
-    def from_dict(cls, data: dict) -> 'RentalHistory':
-        return cls(
-            plaka=data.get('plaka', ''),
-            kiralayan=data.get('kiralayan', ''),
-            baslangic_tarihi=data.get('baslangic_tarihi', ''),
-            bitis_tarihi=data.get('bitis_tarihi', ''),
-            toplam_ucret=float(data.get('toplam_ucret', 0)),
-            iade_tarihi=data.get('iade_tarihi')
-        )
 
 
 class DataManager:
-    
-    def __init__(self, data_file: str = "vehicles.json"):
-        self.data_file = data_file
-        self.vehicles: List[Vehicle] = []
-        self.rental_history: List[RentalHistory] = []
-        self._ensure_data_file()
-        self.load_vehicles()
-    
-    def _ensure_data_file(self):
-        if not os.path.exists(self.data_file):
-            self._create_initial_data()
-    
-    def _create_initial_data(self):
-        initial_data = {
-            "vehicles": [
-                {
-                    "plaka": "34ABC123",
-                    "marka": "Fiat",
-                    "model": "Doblo",
-                    "ucret": 800,
-                    "durum": "müsait",
-                    "kiralayan": None,
-                    "baslangic_tarihi": None,
-                    "bitis_tarihi": None
-                },
-                {
-                    "plaka": "06XYZ789",
-                    "marka": "Honda",
-                    "model": "Civic",
-                    "ucret": 750,
-                    "durum": "müsait",
-                    "kiralayan": None,
-                    "baslangic_tarihi": None,
-                    "bitis_tarihi": None
-                },
-                {
-                    "plaka": "35DEF456",
-                    "marka": "Volkswagen",
-                    "model": "Passat",
-                    "ucret": 900,
-                    "durum": "müsait",
-                    "kiralayan": None,
-                    "baslangic_tarihi": None,
-                    "bitis_tarihi": None
-                }
-            ],
-            "rental_history": []
-        }
-        with open(self.data_file, 'w', encoding='utf-8') as f:
-            json.dump(initial_data, f, ensure_ascii=False, indent=2)
-    
-    def load_vehicles(self) -> List[Vehicle]:
-        try:
-            with open(self.data_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                self.vehicles = [Vehicle.from_dict(v) for v in data.get('vehicles', [])]
-                self.rental_history = [RentalHistory.from_dict(h) for h in data.get('rental_history', [])]
-        except (json.JSONDecodeError, FileNotFoundError) as e:
-            print(f"Veri yüklenirken hata: {e}")
-            self.vehicles = []
-            self.rental_history = []
-        return self.vehicles
-    
-    def save_vehicles(self) -> bool:
-        try:
-            data = {
-                "vehicles": [v.to_dict() for v in self.vehicles],
-                "rental_history": [h.to_dict() for h in self.rental_history]
-            }
-            with open(self.data_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-            return True
-        except IOError as e:
-            print(f"Veri kaydedilirken hata: {e}")
-            return False
-    
+
+    def __init__(self, db_path: str = "vehicles.db"):
+        self.db_path = db_path
+        self._connect()
+        self._create_tables()
+        self._ensure_initial_data()
+
+    def _connect(self):
+        self.conn = sqlite3.connect(self.db_path)
+        self.conn.row_factory = sqlite3.Row
+        self.cursor = self.conn.cursor()
+
+    def _create_tables(self):
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS vehicles (
+            plaka TEXT PRIMARY KEY,
+            marka TEXT,
+            model TEXT,
+            ucret REAL,
+            durum TEXT,
+            kiralayan TEXT,
+            baslangic_tarihi TEXT,
+            bitis_tarihi TEXT
+        )
+        """)
+
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS rental_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plaka TEXT,
+            kiralayan TEXT,
+            baslangic_tarihi TEXT,
+            bitis_tarihi TEXT,
+            toplam_ucret REAL,
+            iade_tarihi TEXT
+        )
+        """)
+        self.conn.commit()
+
+    def _ensure_initial_data(self):
+        self.cursor.execute("SELECT COUNT(*) FROM vehicles")
+        if self.cursor.fetchone()[0] == 0:
+            sample = [
+                ("34ABC123", "Toyota", "Corolla", 800, "müsait", None, None, None),
+                ("06XYZ789", "Honda", "Civic", 750, "müsait", None, None, None),
+                ("35DEF456", "Volkswagen", "Golf", 900, "müsait", None, None, None)
+            ]
+            self.cursor.executemany("""
+            INSERT INTO vehicles VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, sample)
+            self.conn.commit()
+
+    # ---------- VEHICLE CRUD ----------
+
     def add_vehicle(self, vehicle: Vehicle) -> bool:
-        if self.get_vehicle_by_plaka(vehicle.plaka):
+        try:
+            self.cursor.execute("""
+            INSERT INTO vehicles VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                vehicle.plaka, vehicle.marka, vehicle.model, vehicle.ucret,
+                vehicle.durum, vehicle.kiralayan,
+                vehicle.baslangic_tarihi, vehicle.bitis_tarihi
+            ))
+            self.conn.commit()
+            return True
+        except sqlite3.IntegrityError:
             return False
-        self.vehicles.append(vehicle)
-        return True
-    
+
     def remove_vehicle(self, plaka: str) -> bool:
-        vehicle = self.get_vehicle_by_plaka(plaka)
-        if vehicle:
-            self.vehicles.remove(vehicle)
-            return True
-        return False
-    
-    def update_vehicle(self, plaka: str, updated_data: dict) -> bool:
-        vehicle = self.get_vehicle_by_plaka(plaka)
-        if vehicle:
-            for key, value in updated_data.items():
-                if hasattr(vehicle, key):
-                    setattr(vehicle, key, value)
-            return True
-        return False
-    
+        self.cursor.execute("DELETE FROM vehicles WHERE plaka = ?", (plaka,))
+        self.conn.commit()
+        return self.cursor.rowcount > 0
+
+    def update_vehicle(self, plaka: str, data: dict) -> bool:
+        fields = ", ".join(f"{k}=?" for k in data.keys())
+        values = list(data.values()) + [plaka]
+        self.cursor.execute(f"""
+        UPDATE vehicles SET {fields} WHERE plaka = ?
+        """, values)
+        self.conn.commit()
+        return self.cursor.rowcount > 0
+
     def get_vehicle_by_plaka(self, plaka: str) -> Optional[Vehicle]:
-        for vehicle in self.vehicles:
-            if vehicle.plaka == plaka:
-                return vehicle
-        return None
-    
+        self.cursor.execute("SELECT * FROM vehicles WHERE plaka = ?", (plaka,))
+        row = self.cursor.fetchone()
+        return Vehicle(**row) if row else None
+
     def get_all_vehicles(self) -> List[Vehicle]:
-        return self.vehicles
-    
+        self.cursor.execute("SELECT * FROM vehicles")
+        return [Vehicle(**row) for row in self.cursor.fetchall()]
+
     def get_vehicles_by_status(self, status: str) -> List[Vehicle]:
-        return [v for v in self.vehicles if v.durum == status]
-    
+        self.cursor.execute("SELECT * FROM vehicles WHERE durum = ?", (status,))
+        return [Vehicle(**row) for row in self.cursor.fetchall()]
+
+    # ---------- RENTAL HISTORY ----------
+
     def add_rental_history(self, history: RentalHistory):
-        self.rental_history.append(history)
-    
+        self.cursor.execute("""
+        INSERT INTO rental_history
+        (plaka, kiralayan, baslangic_tarihi, bitis_tarihi, toplam_ucret, iade_tarihi)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            history.plaka, history.kiralayan,
+            history.baslangic_tarihi, history.bitis_tarihi,
+            history.toplam_ucret, history.iade_tarihi
+        ))
+        self.conn.commit()
+
     def get_rental_history(self) -> List[RentalHistory]:
-        return self.rental_history
+        self.cursor.execute("SELECT * FROM rental_history")
+        return [
+            RentalHistory(
+                plaka=row["plaka"],
+                kiralayan=row["kiralayan"],
+                baslangic_tarihi=row["baslangic_tarihi"],
+                bitis_tarihi=row["bitis_tarihi"],
+                toplam_ucret=row["toplam_ucret"],
+                iade_tarihi=row["iade_tarihi"]
+            )
+            for row in self.cursor.fetchall()
+        ]
+
+    def save_vehicles(self) -> bool:
+        # SQLite'ta her işlem commit olduğu için dummy
+        return True

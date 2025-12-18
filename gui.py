@@ -318,7 +318,7 @@ class CarRentalApp:
         
         # Veri yöneticisi
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.data_manager = DataManager(os.path.join(script_dir, "vehicles.json"))
+        self.data_manager = DataManager(os.path.join(script_dir, "vehicles.db"))
         self.rental_service = RentalService(self.data_manager)
         
         self._setup_styles()
@@ -328,7 +328,6 @@ class CarRentalApp:
         self.root.protocol("WM_DELETE_WINDOW", self._on_closing)
     
     def _initial_load(self):
-        self.data_manager.load_vehicles()
         self._refresh_vehicle_list()
         self._set_status("Veriler yüklendi")
     
@@ -451,10 +450,6 @@ class CarRentalApp:
                 indicatoron=0, padx=10, pady=3, width=10, relief='flat'
             ).pack(fill=tk.X, pady=1)
         
-        # Kaydet
-        StyledButton(parent, "💾 KAYDET", self._manual_save,
-                    COLORS['bg_card'], COLORS['text_primary'], 
-                    font_size=10, bold=False, pady=8).pack(fill=tk.X, side=tk.BOTTOM)
     
     def _create_list_panel(self, parent):
         card = tk.Frame(parent, bg=COLORS['bg_card'], padx=15, pady=15)
@@ -678,17 +673,10 @@ class CarRentalApp:
             else:
                 messagebox.showerror("✗ Hata", msg)
     
-    def _manual_save(self):
-        if self.data_manager.save_vehicles():
-            messagebox.showinfo("✓ Başarılı", "Veriler kaydedildi!")
-            self._set_status("Kaydedildi")
-        else:
-            messagebox.showerror("Hata", "Kaydetme hatası!")
-    
+
     def _set_status(self, msg):
         self.status_label.config(text=f"✓ {msg} ({datetime.now().strftime('%H:%M:%S')})")
     
     def _on_closing(self):
         if messagebox.askyesno("Çıkış", "Çıkmak istiyor musunuz?"):
-            self.data_manager.save_vehicles()
             self.root.destroy()
