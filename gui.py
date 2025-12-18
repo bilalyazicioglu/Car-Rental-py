@@ -310,6 +310,7 @@ class CarRentalApp:
     """Ana uygulama sınıfı."""
     
     def __init__(self, root: tk.Tk):
+        self.current_user = None
         self.root = root
         self.root.title("Araç Kiralama Sistemi")
         self.root.geometry("1300x850")
@@ -679,4 +680,5 @@ class CarRentalApp:
     
     def _on_closing(self):
         if messagebox.askyesno("Çıkış", "Çıkmak istiyor musunuz?"):
+            self.data_manager.cleanup_users_on_exit()
             self.root.destroy()
