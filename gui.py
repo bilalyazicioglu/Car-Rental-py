@@ -435,6 +435,8 @@ class CarRentalApp:
         self.data_manager = DataManager(os.path.join(script_dir, "car_rental.db"))
         self.rental_service = RentalService(self.data_manager)
         
+        self._running = True  # Timer kontrolü için
+        
         self._setup_styles()
         self._create_widgets()
         
@@ -489,10 +491,30 @@ class CarRentalApp:
         header = tk.Frame(parent, bg=COLORS['bg_primary'])
         header.pack(fill=tk.X, pady=(0, 10))
         
-        # Sol
+        # Sol - Başlık ve Profil
         left = tk.Frame(header, bg=COLORS['bg_primary'])
         left.pack(side=tk.LEFT)
         
+        # Üst kısım - Profil
+        profile_frame = tk.Frame(left, bg=COLORS['bg_card'], padx=10, pady=5)
+        profile_frame.pack(anchor=tk.W, pady=(0, 8))
+        
+        # Kullanıcı bilgisi
+        role_text = "Admin" if self.is_admin else "Müşteri"
+        role_color = COLORS['warning'] if self.is_admin else COLORS['text_secondary']
+        
+        tk.Label(profile_frame, text=f"{self.current_user.username}",
+                font=(FONT_FAMILY, 11, "bold"),
+                bg=COLORS['bg_card'], fg=COLORS['text_primary']).pack(side=tk.LEFT, padx=(0, 8))
+        
+        tk.Label(profile_frame, text=role_text,
+                font=(FONT_FAMILY, 9),
+                bg=COLORS['bg_card'], fg=role_color).pack(side=tk.LEFT, padx=(0, 10))
+        
+        StyledButton(profile_frame, "Çıkış", self._logout,
+                    COLORS['danger'], '#ffffff', font_size=9, padx=10, pady=3).pack(side=tk.LEFT)
+        
+        # Başlık
         tk.Label(left, text="Araç Kiralama Sistemi",
                 font=(FONT_FAMILY, 24, "bold"),
                 bg=COLORS['bg_primary'], fg=COLORS['text_primary']).pack(anchor=tk.W)
@@ -651,8 +673,13 @@ class CarRentalApp:
         self._update_time()
     
     def _update_time(self):
-        self.time_label.config(text=datetime.now().strftime("📅 %d.%m.%Y  🕐 %H:%M:%S"))
-        self.root.after(1000, self._update_time)
+        if not self._running:
+            return
+        try:
+            self.time_label.config(text=datetime.now().strftime("📅 %d.%m.%Y  🕐 %H:%M:%S"))
+            self.root.after(1000, self._update_time)
+        except:
+            pass  # Widget yok artık
     
     def _refresh_vehicle_list(self):
         for item in self.tree.get_children():
@@ -802,6 +829,28 @@ class CarRentalApp:
             else:
                 messagebox.showerror("✗ Hata", msg)
     
+
+    def _logout(self):
+        """Çıkış yap ve auth ekranına dön."""
+        if messagebox.askyesno("Çıkış", "Oturumu kapatmak istiyor musunuz?"):
+            # Timer'u durdur
+            self._running = False
+            
+            # Tüm widget'ları temizle
+            for widget in self.root.winfo_children():
+                widget.destroy()
+            
+            # Ana pencereyi gizle
+            self.root.withdraw()
+            
+            # Auth penceresini aç
+            from auth_gui import AuthWindow
+            
+            def on_login_success(user):
+                self.root.deiconify()
+                CarRentalApp(self.root, current_user=user)
+            
+            AuthWindow(self.root, self.data_manager, on_login_success)
 
     def _show_rental_history(self):
         """Kiralama geçmişi diyaloğunu aç."""

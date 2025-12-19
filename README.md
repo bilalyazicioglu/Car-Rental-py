@@ -83,7 +83,7 @@ Car-Rental-py/
 | **Tkinter** | GUI framework |
 | **SQLite3** | Veritabanı |
 
-## 👥 Kullanıcı Rolleri
+## Kullanıcı Rolleri
 
 | Rol | Yetkiler |
 |-----|----------|
