@@ -110,7 +110,7 @@ class StyledButton(tk.Frame):
 class RentalDialog(tk.Toplevel):
     """Kiralama bilgileri giriş diyalogu."""
     
-    def __init__(self, parent, vehicle_info: str):
+    def __init__(self, parent, vehicle_info: str, customer_name: str = ""):
         super().__init__(parent)
         self.title("Kiralama Başlat")
         self.geometry("550x520")
@@ -122,6 +122,7 @@ class RentalDialog(tk.Toplevel):
         self.configure(bg=COLORS['bg_primary'])
         
         self.result = None
+        self.customer_name = customer_name
         self._create_widgets(vehicle_info)
         self._center_window()
     
@@ -150,7 +151,7 @@ class RentalDialog(tk.Toplevel):
         form.columnconfigure(1, weight=1)
         
         fields = [
-            ("Müşteri Adı:", "customer_entry", ""),
+            ("Müşteri Adı:", "customer_entry", self.customer_name),
             ("Başlangıç:", "start_date_entry", date.today().strftime("%Y-%m-%d")),
             ("Bitiş:", "end_date_entry", (date.today() + timedelta(days=3)).strftime("%Y-%m-%d")),
         ]
@@ -735,7 +736,7 @@ class CarRentalApp:
         if not v:
             return
         
-        dialog = RentalDialog(self.root, f"{v.marka} {v.model} ({v.plaka})")
+        dialog = RentalDialog(self.root, f"{v.marka} {v.model} ({v.plaka})", self.current_user.username)
         self.root.wait_window(dialog)
         
         if dialog.result:
