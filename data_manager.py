@@ -1,8 +1,14 @@
-import json
-import os
-from dataclasses import dataclass, asdict, field
-from typing import Optional, List
+import sqlite3
+from dataclasses import dataclass
 from datetime import datetime
+
+
+# ===================== MODELLER =====================
+
+@dataclass
+class User:
+    username: str
+    role: str
 
 
 @dataclass
@@ -11,26 +17,16 @@ class Vehicle:
     marka: str
     model: str
     ucret: float
-    durum: str = "müsait"
-    kiralayan: Optional[str] = None
-    baslangic_tarihi: Optional[str] = None
-    bitis_tarihi: Optional[str] = None
-    
-    def to_dict(self) -> dict:
-        return asdict(self)
-    
-    @classmethod
-    def from_dict(cls, data: dict) -> 'Vehicle':
-        return cls(
-            plaka=data.get('plaka', ''),
-            marka=data.get('marka', ''),
-            model=data.get('model', ''),
-            ucret=float(data.get('ucret', 0)),
-            durum=data.get('durum', 'müsait'),
-            kiralayan=data.get('kiralayan'),
-            baslangic_tarihi=data.get('baslangic_tarihi'),
-            bitis_tarihi=data.get('bitis_tarihi')
-        )
+    durum: str
+    kiralayan: str | None
+
+    def __init__(self, plaka: str, marka: str, model: str, ucret: float, durum: str = "müsait", kiralayan: str | None = None):
+        self.plaka = plaka
+        self.marka = marka
+        self.model = model
+        self.ucret = ucret
+        self.durum = durum
+        self.kiralayan = kiralayan
 
 
 @dataclass
@@ -40,136 +36,161 @@ class RentalHistory:
     baslangic_tarihi: str
     bitis_tarihi: str
     toplam_ucret: float
-    iade_tarihi: Optional[str] = None
-    
-    def to_dict(self) -> dict:
-        return asdict(self)
-    
-    @classmethod
-    def from_dict(cls, data: dict) -> 'RentalHistory':
-        return cls(
-            plaka=data.get('plaka', ''),
-            kiralayan=data.get('kiralayan', ''),
-            baslangic_tarihi=data.get('baslangic_tarihi', ''),
-            bitis_tarihi=data.get('bitis_tarihi', ''),
-            toplam_ucret=float(data.get('toplam_ucret', 0)),
-            iade_tarihi=data.get('iade_tarihi')
-        )
+    iade_tarihi: str
 
+
+# ===================== DATA MANAGER =====================
 
 class DataManager:
-    
-    def __init__(self, data_file: str = "vehicles.json"):
-        self.data_file = data_file
-        self.vehicles: List[Vehicle] = []
-        self.rental_history: List[RentalHistory] = []
-        self._ensure_data_file()
-        self.load_vehicles()
-    
-    def _ensure_data_file(self):
-        if not os.path.exists(self.data_file):
-            self._create_initial_data()
-    
-    def _create_initial_data(self):
-        initial_data = {
-            "vehicles": [
-                {
-                    "plaka": "34ABC123",
-                    "marka": "Fiat",
-                    "model": "Doblo",
-                    "ucret": 800,
-                    "durum": "müsait",
-                    "kiralayan": None,
-                    "baslangic_tarihi": None,
-                    "bitis_tarihi": None
-                },
-                {
-                    "plaka": "06XYZ789",
-                    "marka": "Honda",
-                    "model": "Civic",
-                    "ucret": 750,
-                    "durum": "müsait",
-                    "kiralayan": None,
-                    "baslangic_tarihi": None,
-                    "bitis_tarihi": None
-                },
-                {
-                    "plaka": "35DEF456",
-                    "marka": "Volkswagen",
-                    "model": "Passat",
-                    "ucret": 900,
-                    "durum": "müsait",
-                    "kiralayan": None,
-                    "baslangic_tarihi": None,
-                    "bitis_tarihi": None
-                }
-            ],
-            "rental_history": []
-        }
-        with open(self.data_file, 'w', encoding='utf-8') as f:
-            json.dump(initial_data, f, ensure_ascii=False, indent=2)
-    
-    def load_vehicles(self) -> List[Vehicle]:
+    def __init__(self, db_path: str):
+        self.conn = sqlite3.connect(db_path)
+        self.conn.row_factory = sqlite3.Row
+        self._create_tables()
+        self._create_default_admin()
+
+    # ---------- TABLES ----------
+    def _create_tables(self):
+        c = self.conn.cursor()
+
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password TEXT NOT NULL,
+            role TEXT NOT NULL
+        )
+        """)
+
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS vehicles (
+            plaka TEXT PRIMARY KEY,
+            marka TEXT,
+            model TEXT,
+            ucret REAL,
+            durum TEXT,
+            kiralayan TEXT
+        )
+        """)
+
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS rental_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plaka TEXT,
+            kiralayan TEXT,
+            baslangic_tarihi TEXT,
+            bitis_tarihi TEXT,
+            toplam_ucret REAL,
+            iade_tarihi TEXT
+        )
+        """)
+
+        self.conn.commit()
+
+    # ---------- USERS ----------
+    def user_exists(self, username):
+        c = self.conn.execute("SELECT 1 FROM users WHERE username=?", (username,))
+        return c.fetchone() is not None
+
+    def create_user(self, username, password, role="user"):
         try:
-            with open(self.data_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                self.vehicles = [Vehicle.from_dict(v) for v in data.get('vehicles', [])]
-                self.rental_history = [RentalHistory.from_dict(h) for h in data.get('rental_history', [])]
-        except (json.JSONDecodeError, FileNotFoundError) as e:
-            print(f"Veri yüklenirken hata: {e}")
-            self.vehicles = []
-            self.rental_history = []
-        return self.vehicles
-    
-    def save_vehicles(self) -> bool:
-        try:
-            data = {
-                "vehicles": [v.to_dict() for v in self.vehicles],
-                "rental_history": [h.to_dict() for h in self.rental_history]
-            }
-            with open(self.data_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+            self.conn.execute(
+                "INSERT INTO users VALUES (?, ?, ?)",
+                (username, password, role)
+            )
+            self.conn.commit()
             return True
-        except IOError as e:
-            print(f"Veri kaydedilirken hata: {e}")
+        except:
             return False
-    
-    def add_vehicle(self, vehicle: Vehicle) -> bool:
-        if self.get_vehicle_by_plaka(vehicle.plaka):
+
+    def authenticate_user(self, username, password):
+        c = self.conn.execute(
+            "SELECT * FROM users WHERE username=? AND password=?",
+            (username, password)
+        )
+        row = c.fetchone()
+        if not row:
+            return None
+        return User(row["username"], row["role"])
+
+    # ---------- VEHICLES ----------
+    def add_vehicle(self, v: Vehicle):
+        """
+        Vehicle objesi alır ve veritabanına ekler.
+        """
+        # Aynı plakaya sahip araç varsa ekleme
+        if self.get_vehicle_by_plaka(v.plaka):
             return False
-        self.vehicles.append(vehicle)
+
+        self.conn.execute("""
+                          INSERT INTO vehicles (plaka, marka, model, ucret, durum, kiralayan)
+                          VALUES (?, ?, ?, ?, ?, ?)
+                          """, (v.plaka, v.marka, v.model, v.ucret, v.durum, v.kiralayan))
+        self.conn.commit()
         return True
+
+    def get_all_vehicles(self):
+        c = self.conn.execute("SELECT * FROM vehicles")
+        return [Vehicle(**row) for row in map(dict, c.fetchall())]
+
+    def get_vehicle_by_plaka(self, plaka):
+        c = self.conn.execute("SELECT * FROM vehicles WHERE plaka=?", (plaka,))
+        row = c.fetchone()
+        return Vehicle(**row) if row else None
+
+    def update_vehicle(self, v: Vehicle):
+        self.conn.execute("""
+        UPDATE vehicles SET marka=?, model=?, ucret=?, durum=?, kiralayan=?
+        WHERE plaka=?
+        """, (v.marka, v.model, v.ucret, v.durum, v.kiralayan, v.plaka))
+        self.conn.commit()
+
+    def delete_vehicle(self, plaka):
+        self.conn.execute("DELETE FROM vehicles WHERE plaka=?", (plaka,))
+        self.conn.commit()
+
+    # ---------- RENTAL HISTORY ----------
+    def add_rental_history(self, h: RentalHistory):
+        self.conn.execute("""
+        INSERT INTO rental_history
+        (plaka, kiralayan, baslangic_tarihi, bitis_tarihi, toplam_ucret, iade_tarihi)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            h.plaka, h.kiralayan,
+            h.baslangic_tarihi, h.bitis_tarihi,
+            h.toplam_ucret, h.iade_tarihi
+        ))
+        self.conn.commit()
+
+    def get_rental_history(self):
+        c = self.conn.execute("SELECT * FROM rental_history")
+        return [
+            RentalHistory(
+                row["plaka"],
+                row["kiralayan"],
+                row["baslangic_tarihi"],
+                row["bitis_tarihi"],
+                row["toplam_ucret"],
+                row["iade_tarihi"]
+            )
+            for row in c.fetchall()
+        ]
     
-    def remove_vehicle(self, plaka: str) -> bool:
-        vehicle = self.get_vehicle_by_plaka(plaka)
-        if vehicle:
-            self.vehicles.remove(vehicle)
-            return True
-        return False
-    
-    def update_vehicle(self, plaka: str, updated_data: dict) -> bool:
-        vehicle = self.get_vehicle_by_plaka(plaka)
-        if vehicle:
-            for key, value in updated_data.items():
-                if hasattr(vehicle, key):
-                    setattr(vehicle, key, value)
-            return True
-        return False
-    
-    def get_vehicle_by_plaka(self, plaka: str) -> Optional[Vehicle]:
-        for vehicle in self.vehicles:
-            if vehicle.plaka == plaka:
-                return vehicle
-        return None
-    
-    def get_all_vehicles(self) -> List[Vehicle]:
-        return self.vehicles
-    
-    def get_vehicles_by_status(self, status: str) -> List[Vehicle]:
-        return [v for v in self.vehicles if v.durum == status]
-    
-    def add_rental_history(self, history: RentalHistory):
-        self.rental_history.append(history)
-    
-    def get_rental_history(self) -> List[RentalHistory]:
-        return self.rental_history
+    def _create_default_admin(self):
+        c = self.conn.execute(
+            "SELECT 1 FROM users WHERE username='admin'"
+        )
+        if c.fetchone() is None:
+            self.conn.execute(
+                "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+                ("admin", "admin", "admin")
+            )
+            self.conn.commit()
+            
+    def cleanup_users_on_exit(self):
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM users WHERE role != 'admin'")
+        self.conn.commit()
+        
+    def get_vehicles_by_status(self, durum: str):
+        c = self.conn.execute("SELECT * FROM vehicles WHERE durum=?", (durum,))
+        return [Vehicle(**row) for row in map(dict, c.fetchall())]
+

@@ -90,7 +90,6 @@ class RentalService:
         )
        
         if self.data_manager.add_vehicle(vehicle):
-            self.data_manager.save_vehicles()
             return True, f"'{vehicle.plaka}' plakalı araç başarıyla eklendi!"
         else:
             return False, "Araç eklenirken bir hata oluştu!"
