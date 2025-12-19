@@ -19,14 +19,18 @@ class Vehicle:
     ucret: float
     durum: str
     kiralayan: str | None
+    baslangic_tarihi: str | None
+    bitis_tarihi: str | None
 
-    def __init__(self, plaka: str, marka: str, model: str, ucret: float, durum: str = "müsait", kiralayan: str | None = None):
+    def __init__(self, plaka: str, marka: str, model: str, ucret: float, durum: str = "müsait", kiralayan: str | None = None, baslangic_tarihi: str | None = None, bitis_tarihi: str | None = None):
         self.plaka = plaka
         self.marka = marka
         self.model = model
         self.ucret = ucret
         self.durum = durum
         self.kiralayan = kiralayan
+        self.baslangic_tarihi = baslangic_tarihi
+        self.bitis_tarihi = bitis_tarihi
 
 
 @dataclass
@@ -67,7 +71,9 @@ class DataManager:
             model TEXT,
             ucret REAL,
             durum TEXT,
-            kiralayan TEXT
+            kiralayan TEXT,
+            baslangic_tarihi TEXT,
+            bitis_tarihi TEXT
         )
         """)
 
@@ -121,9 +127,9 @@ class DataManager:
             return False
 
         self.conn.execute("""
-                          INSERT INTO vehicles (plaka, marka, model, ucret, durum, kiralayan)
-                          VALUES (?, ?, ?, ?, ?, ?)
-                          """, (v.plaka, v.marka, v.model, v.ucret, v.durum, v.kiralayan))
+                          INSERT INTO vehicles (plaka, marka, model, ucret, durum, kiralayan, baslangic_tarihi, bitis_tarihi)
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                          """, (v.plaka, v.marka, v.model, v.ucret, v.durum, v.kiralayan, v.baslangic_tarihi, v.bitis_tarihi))
         self.conn.commit()
         return True
 
@@ -136,15 +142,31 @@ class DataManager:
         row = c.fetchone()
         return Vehicle(**row) if row else None
 
-    def update_vehicle(self, v: Vehicle):
-        self.conn.execute("""
-        UPDATE vehicles SET marka=?, model=?, ucret=?, durum=?, kiralayan=?
-        WHERE plaka=?
-        """, (v.marka, v.model, v.ucret, v.durum, v.kiralayan, v.plaka))
-        self.conn.commit()
+    def update_vehicle(self, plaka: str, data: dict):
+        """Araç bilgilerini günceller. data dict içinde güncellenecek alanlar olmalı."""
+        allowed_fields = ['marka', 'model', 'ucret', 'durum', 'kiralayan', 'baslangic_tarihi', 'bitis_tarihi']
+        updates = []
+        values = []
+        for key, value in data.items():
+            if key in allowed_fields:
+                updates.append(f"{key}=?")
+                values.append(value)
+        if updates:
+            values.append(plaka)
+            self.conn.execute(f"UPDATE vehicles SET {', '.join(updates)} WHERE plaka=?", values)
+            self.conn.commit()
 
     def delete_vehicle(self, plaka):
         self.conn.execute("DELETE FROM vehicles WHERE plaka=?", (plaka,))
+        self.conn.commit()
+
+    def remove_vehicle(self, plaka):
+        """delete_vehicle için alias - rental_service uyumluluğu."""
+        self.delete_vehicle(plaka)
+        return True
+
+    def save_vehicles(self):
+        """SQLite otomatik kaydettiği için bu metod sadece uyumluluk için var."""
         self.conn.commit()
 
     # ---------- RENTAL HISTORY ----------
