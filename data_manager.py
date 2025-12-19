@@ -20,6 +20,14 @@ class Vehicle:
     durum: str
     kiralayan: str | None
 
+    def __init__(self, plaka: str, marka: str, model: str, ucret: float, durum: str = "müsait", kiralayan: str | None = None):
+        self.plaka = plaka
+        self.marka = marka
+        self.model = model
+        self.ucret = ucret
+        self.durum = durum
+        self.kiralayan = kiralayan
+
 
 @dataclass
 class RentalHistory:
@@ -105,10 +113,19 @@ class DataManager:
 
     # ---------- VEHICLES ----------
     def add_vehicle(self, v: Vehicle):
+        """
+        Vehicle objesi alır ve veritabanına ekler.
+        """
+        # Aynı plakaya sahip araç varsa ekleme
+        if self.get_vehicle_by_plaka(v.plaka):
+            return False
+
         self.conn.execute("""
-        INSERT INTO vehicles VALUES (?, ?, ?, ?, ?, ?)
-        """, (v.plaka, v.marka, v.model, v.ucret, v.durum, v.kiralayan))
+                          INSERT INTO vehicles (plaka, marka, model, ucret, durum, kiralayan)
+                          VALUES (?, ?, ?, ?, ?, ?)
+                          """, (v.plaka, v.marka, v.model, v.ucret, v.durum, v.kiralayan))
         self.conn.commit()
+        return True
 
     def get_all_vehicles(self):
         c = self.conn.execute("SELECT * FROM vehicles")
@@ -172,4 +189,8 @@ class DataManager:
         cursor = self.conn.cursor()
         cursor.execute("DELETE FROM users WHERE role != 'admin'")
         self.conn.commit()
+        
+    def get_vehicles_by_status(self, durum: str):
+        c = self.conn.execute("SELECT * FROM vehicles WHERE durum=?", (durum,))
+        return [Vehicle(**row) for row in map(dict, c.fetchall())]
 

@@ -309,8 +309,9 @@ class EditVehicleDialog(tk.Toplevel):
 class CarRentalApp:
     """Ana uygulama sınıfı."""
     
-    def __init__(self, root: tk.Tk):
-        self.current_user = None
+    def __init__(self, root: tk.Tk, current_user):
+        self.current_user = current_user
+        self.is_admin = current_user.role == "admin"
         self.root = root
         self.root.title("Araç Kiralama Sistemi")
         self.root.geometry("1300x850")
@@ -319,7 +320,7 @@ class CarRentalApp:
         
         # Veri yöneticisi
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.data_manager = DataManager(os.path.join(script_dir, "vehicles.db"))
+        self.data_manager = DataManager(os.path.join(script_dir, "car_rental.db"))
         self.rental_service = RentalService(self.data_manager)
         
         self._setup_styles()
@@ -429,8 +430,9 @@ class CarRentalApp:
                            highlightcolor=COLORS['accent'])
             entry.pack(fill=tk.X, pady=(3, 8), ipady=5)
             setattr(self, attr, entry)
-        
-        StyledButton(form_card, "➕ EKLE", self._add_vehicle,
+            
+        if self.is_admin:
+            StyledButton(form_card, "➕ EKLE", self._add_vehicle,
                     COLORS['accent'], '#ffffff', font_size=10, padx=0, pady=8).pack(fill=tk.X, pady=(3, 0))
         
         # Filtre kartı - daha kompakt
@@ -489,21 +491,30 @@ class CarRentalApp:
         scrollbar.config(command=self.tree.yview)
         
         self.tree.bind("<<TreeviewSelect>>", self._on_selection_change)
-        self.tree.bind("<Double-1>", lambda e: self._edit_vehicle())
+        if self.is_admin:
+            self.tree.bind("<Double-1>", lambda e: self._edit_vehicle())
         
         # Butonlar
         btn_frame = tk.Frame(card, bg=COLORS['bg_card'])
         btn_frame.pack(fill=tk.X, pady=(15, 0))
         
         self.action_buttons = {}
-        for text, cmd, color, key in [
+        buttons = [
             ("🔑 KİRALA", self._start_rental, COLORS['success'], "rent"),
             ("↩️ İADE", self._end_rental, COLORS['warning'], "return"),
-            ("✏️ DÜZENLE", self._edit_vehicle, COLORS['info'], "edit"),
-            ("🗑️ SİL", self._delete_vehicle, COLORS['danger'], "delete")
-        ]:
-            btn = StyledButton(btn_frame, text, cmd, color, '#ffffff',
-                              font_size=11, padx=15, pady=10, state='disabled')
+        ]
+
+        if self.is_admin:
+            buttons.extend([
+                ("✏️ DÜZENLE", self._edit_vehicle, COLORS['info'], "edit"),
+                ("🗑️ SİL", self._delete_vehicle, COLORS['danger'], "delete"),
+            ])
+
+        for text, cmd, color, key in buttons:
+            btn = StyledButton(
+                btn_frame, text, cmd, color, '#ffffff',
+                font_size=11, padx=15, pady=10, state='disabled'
+            )
             btn.pack(side=tk.LEFT, padx=(0, 8))
             self.action_buttons[key] = btn
     
@@ -564,23 +575,21 @@ class CarRentalApp:
             self._update_button_states(None)
     
     def _update_button_states(self, vehicle):
+        for btn in self.action_buttons.values():
+            btn.disable()
+
         if vehicle is None:
-            for btn in self.action_buttons.values():
-                btn.disable()
-        else:
+            return
+
+        if vehicle.durum == "müsait":
+            self.action_buttons['rent'].enable()
+        elif vehicle.durum == "kirada":
+            self.action_buttons['return'].enable()
+
+        if self.is_admin:
             self.action_buttons['edit'].enable()
-            
+
             if vehicle.durum == "müsait":
-                self.action_buttons['rent'].enable()
-                self.action_buttons['return'].disable()
-                self.action_buttons['delete'].enable()
-            elif vehicle.durum == "kirada":
-                self.action_buttons['rent'].disable()
-                self.action_buttons['return'].enable()
-                self.action_buttons['delete'].disable()
-            else:
-                self.action_buttons['rent'].disable()
-                self.action_buttons['return'].disable()
                 self.action_buttons['delete'].enable()
     
     def _add_vehicle(self):

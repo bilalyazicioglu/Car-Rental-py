@@ -1,23 +1,32 @@
+import os
 import tkinter as tk
 from data_manager import DataManager
 from auth_gui import AuthWindow
 from gui import CarRentalApp
 
 
-def start_app(user):
-    app = CarRentalApp(root)
-    app.current_user = user
-
-
-if __name__ == "__main__":
+def main():
     root = tk.Tk()
     root.withdraw()
 
-    dm = DataManager("car_rental.db")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(base_dir, "car_rental.db")
 
-    def on_login(user):
+    data_manager = DataManager(db_path)
+
+    def on_login_success(user):
         root.deiconify()
-        start_app(user)
+        CarRentalApp(root, current_user=user)
 
-    AuthWindow(root, dm, on_login)
+    def on_close():
+        data_manager.cleanup_users_on_exit()
+        root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", on_close)
+
+    AuthWindow(root, data_manager, on_login_success)
     root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
