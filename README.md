@@ -1,19 +1,19 @@
-# 🚗 Araç Kiralama Sistemi
+# Araç Kiralama Sistemi
 
 Modern ve kullanıcı dostu bir araç kiralama yönetim uygulaması. Python ve Tkinter ile geliştirilmiştir.
 
-## ✨ Özellikler
+## Özellikler
 
-- 🔐 **Kullanıcı Yetkilendirme** - Giriş/Kayıt sistemi (Admin & User rolleri)
-- 🚙 **Araç Yönetimi** - Araç ekleme, düzenleme ve silme
-- 📋 **Kiralama İşlemleri** - Kiralama başlatma ve iade alma
-- 📊 **Anlık İstatistikler** - Toplam, müsait, kirada araç sayısı ve gelir
-- 📜 **Kiralama Geçmişi** - Tüm kiralama kayıtlarını görüntüleme
-- 🔍 **Durum Filtreleme** - Müsait, kirada, bakımda filtreleri
-- 💾 **SQLite Veritabanı** - Kalıcı veri saklama
-- 🎨 **Modern Arayüz** - Koyu tema, responsive tasarım
+- **Kullanıcı Yetkilendirme** - Giriş/Kayıt sistemi (Admin & User rolleri)
+- **Araç Yönetimi** - Araç ekleme, düzenleme ve silme
+- **Kiralama İşlemleri** - Kiralama başlatma ve iade alma
+- **Anlık İstatistikler** - Toplam, müsait, kirada araç sayısı ve gelir
+- **Kiralama Geçmişi** - Tüm kiralama kayıtlarını görüntüleme
+- **Durum Filtreleme** - Müsait, kirada, bakımda filtreleri
+- **SQLite Veritabanı** - Kalıcı veri saklama
+- **Modern Arayüz** - Koyu tema, responsive tasarım
 
-## ⚙️ Kurulum
+## Kurulum
 
 1. Repository'yi klonlayın:
 ```bash
@@ -33,7 +33,7 @@ python3 main.py
 
 > **Not:** Bu proje sadece Python standart kütüphanelerini kullanır. Ekstra kurulum gerekmez!
 
-## 🔑 Varsayılan Giriş
+## Varsayılan Giriş
 
 | Kullanıcı | Şifre | Rol |
 |-----------|-------|-----|
@@ -41,7 +41,7 @@ python3 main.py
 
 > Yeni kullanıcılar "Kayıt Ol" ile oluşturulabilir (User rolü ile).
 
-## 📖 Kullanım
+## Kullanım
 
 ### Araç Eklemek (Sadece Admin)
 1. Sol paneldeki form alanlarını doldurun (Plaka, Marka, Model, Ücret)
@@ -49,18 +49,18 @@ python3 main.py
 
 ### Kiralama Başlatmak
 1. Listeden müsait bir araç seçin
-2. "🔑 KİRALA" butonuna tıklayın
+2. "KIRALA" butonuna tıklayın
 3. Müşteri adı ve tarihleri girin
 
 ### Araç İade Almak
 1. Kirada olan aracı seçin
-2. "↩️ İADE" butonuna tıklayın
+2. "İADE" butonuna tıklayın
 
 ### Kiralama Geçmişi
-1. Sağ üstteki "📋 Geçmiş" butonuna tıklayın
+1. Sağ üstteki "Geçmiş" butonuna tıklayın
 2. Tüm kiralama kayıtlarını görüntüleyin
 
-## 📁 Proje Yapısı
+## Proje Yapısı
 
 ```
 Car-Rental-py/
@@ -75,7 +75,7 @@ Car-Rental-py/
 └── README.md
 ```
 
-## 🛠️ Teknolojiler
+## Teknolojiler
 
 | Teknoloji | Açıklama |
 |-----------|----------|
@@ -90,11 +90,11 @@ Car-Rental-py/
 | **Admin** | Araç ekleme, düzenleme, silme, kiralama, iade, geçmiş görüntüleme |
 | **User** | Kiralama, iade, geçmiş görüntüleme |
 
-## 📄 Lisans
+## Lisans
 
 Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır.
 
-## 👨‍💻 Geliştiriciler
+## Geliştiriciler
 
 **Bilal Yazıcıoğlu** - [@bilalyazicioglu](https://github.com/bilalyazicioglu)
 
