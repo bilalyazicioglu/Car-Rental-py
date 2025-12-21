@@ -1,8 +1,8 @@
 import os
 import tkinter as tk
-from data_manager import DataManager
-from auth_gui import AuthWindow
-from gui import CarRentalApp
+from src.backend.data_manager import DataManager
+from src.ui.auth_gui import AuthWindow
+from src.ui.main_gui import CarRentalApp
 
 
 def main():
