@@ -1,49 +1,7 @@
 import sqlite3
-from dataclasses import dataclass
-from datetime import datetime
-
-
-# ===================== MODELLER =====================
-
-@dataclass
-class User:
-    username: str
-    role: str
-
-
-@dataclass
-class Vehicle:
-    plaka: str
-    marka: str
-    model: str
-    ucret: float
-    durum: str
-    kiralayan: str | None
-    baslangic_tarihi: str | None
-    bitis_tarihi: str | None
-
-    def __init__(self, plaka: str, marka: str, model: str, ucret: float, durum: str = "müsait", kiralayan: str | None = None, baslangic_tarihi: str | None = None, bitis_tarihi: str | None = None):
-        self.plaka = plaka
-        self.marka = marka
-        self.model = model
-        self.ucret = ucret
-        self.durum = durum
-        self.kiralayan = kiralayan
-        self.baslangic_tarihi = baslangic_tarihi
-        self.bitis_tarihi = bitis_tarihi
-
-
-@dataclass
-class RentalHistory:
-    plaka: str
-    kiralayan: str
-    baslangic_tarihi: str
-    bitis_tarihi: str
-    toplam_ucret: float
-    iade_tarihi: str
-
-
-# ===================== DATA MANAGER =====================
+from src.models.vehicle import Vehicle
+from src.models.user import User
+from src.models.rental_history import RentalHistory
 
 class DataManager:
     def __init__(self, db_path: str):
@@ -57,37 +15,69 @@ class DataManager:
         c = self.conn.cursor()
 
         c.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY,
-            password TEXT NOT NULL,
-            role TEXT NOT NULL
-        )
-        """)
+                  CREATE TABLE IF NOT EXISTS users
+                  (
+                      username
+                      TEXT
+                      PRIMARY
+                      KEY,
+                      password
+                      TEXT
+                      NOT
+                      NULL,
+                      role
+                      TEXT
+                      NOT
+                      NULL
+                  )
+                  """)
 
         c.execute("""
-        CREATE TABLE IF NOT EXISTS vehicles (
-            plaka TEXT PRIMARY KEY,
-            marka TEXT,
-            model TEXT,
-            ucret REAL,
-            durum TEXT,
-            kiralayan TEXT,
-            baslangic_tarihi TEXT,
-            bitis_tarihi TEXT
-        )
-        """)
+                  CREATE TABLE IF NOT EXISTS vehicles
+                  (
+                      plaka
+                      TEXT
+                      PRIMARY
+                      KEY,
+                      marka
+                      TEXT,
+                      model
+                      TEXT,
+                      ucret
+                      REAL,
+                      durum
+                      TEXT,
+                      kiralayan
+                      TEXT,
+                      baslangic_tarihi
+                      TEXT,
+                      bitis_tarihi
+                      TEXT
+                  )
+                  """)
 
         c.execute("""
-        CREATE TABLE IF NOT EXISTS rental_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            plaka TEXT,
-            kiralayan TEXT,
-            baslangic_tarihi TEXT,
-            bitis_tarihi TEXT,
-            toplam_ucret REAL,
-            iade_tarihi TEXT
-        )
-        """)
+                  CREATE TABLE IF NOT EXISTS rental_history
+                  (
+                      id
+                      INTEGER
+                      PRIMARY
+                      KEY
+                      AUTOINCREMENT,
+                      plaka
+                      TEXT,
+                      kiralayan
+                      TEXT,
+                      baslangic_tarihi
+                      TEXT,
+                      bitis_tarihi
+                      TEXT,
+                      toplam_ucret
+                      REAL,
+                      iade_tarihi
+                      TEXT
+                  )
+                  """)
 
         self.conn.commit()
 
@@ -127,9 +117,11 @@ class DataManager:
             return False
 
         self.conn.execute("""
-                          INSERT INTO vehicles (plaka, marka, model, ucret, durum, kiralayan, baslangic_tarihi, bitis_tarihi)
+                          INSERT INTO vehicles (plaka, marka, model, ucret, durum, kiralayan, baslangic_tarihi,
+                                                bitis_tarihi)
                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                          """, (v.plaka, v.marka, v.model, v.ucret, v.durum, v.kiralayan, v.baslangic_tarihi, v.bitis_tarihi))
+                          """, (v.plaka, v.marka, v.model, v.ucret, v.durum, v.kiralayan, v.baslangic_tarihi,
+                                v.bitis_tarihi))
         self.conn.commit()
         return True
 
@@ -172,14 +164,14 @@ class DataManager:
     # ---------- RENTAL HISTORY ----------
     def add_rental_history(self, h: RentalHistory):
         self.conn.execute("""
-        INSERT INTO rental_history
-        (plaka, kiralayan, baslangic_tarihi, bitis_tarihi, toplam_ucret, iade_tarihi)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            h.plaka, h.kiralayan,
-            h.baslangic_tarihi, h.bitis_tarihi,
-            h.toplam_ucret, h.iade_tarihi
-        ))
+                          INSERT INTO rental_history
+                          (plaka, kiralayan, baslangic_tarihi, bitis_tarihi, toplam_ucret, iade_tarihi)
+                          VALUES (?, ?, ?, ?, ?, ?)
+                          """, (
+                              h.plaka, h.kiralayan,
+                              h.baslangic_tarihi, h.bitis_tarihi,
+                              h.toplam_ucret, h.iade_tarihi
+                          ))
         self.conn.commit()
 
     def get_rental_history(self):
@@ -195,7 +187,7 @@ class DataManager:
             )
             for row in c.fetchall()
         ]
-    
+
     def _create_default_admin(self):
         c = self.conn.execute(
             "SELECT 1 FROM users WHERE username='admin'"
@@ -206,13 +198,12 @@ class DataManager:
                 ("admin", "admin", "admin")
             )
             self.conn.commit()
-            
+
     def cleanup_users_on_exit(self):
         cursor = self.conn.cursor()
         cursor.execute("DELETE FROM users WHERE role != 'admin'")
         self.conn.commit()
-        
+
     def get_vehicles_by_status(self, durum: str):
         c = self.conn.execute("SELECT * FROM vehicles WHERE durum=?", (durum,))
         return [Vehicle(**row) for row in map(dict, c.fetchall())]
-
