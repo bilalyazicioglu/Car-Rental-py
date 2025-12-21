@@ -551,28 +551,28 @@ class CarRentalApp:
             self.stat_labels[key] = lbl
     
     def _create_form_panel(self, parent):
-        # Form kartı - daha kompakt
-        form_card = tk.Frame(parent, bg=COLORS['bg_card'], padx=15, pady=12)
-        form_card.pack(fill=tk.X, pady=(0, 10))
-        
-        tk.Label(form_card, text="➕ Yeni Araç",
-                font=(FONT_FAMILY, 13, "bold"),
-                bg=COLORS['bg_card'], fg=COLORS['text_primary']).pack(anchor=tk.W, pady=(0, 10))
-        
-        for label, attr in [("Plaka", "plaka_entry"), ("Marka", "marka_entry"),
-                            ("Model", "model_entry"), ("Ücret (TL)", "ucret_entry")]:
-            tk.Label(form_card, text=label, font=(FONT_FAMILY, 10),
-                    bg=COLORS['bg_card'], fg=COLORS['text_secondary']).pack(anchor=tk.W)
-            
-            entry = tk.Entry(form_card, font=(FONT_FAMILY, 10), width=22,
-                           bg=COLORS['bg_secondary'], fg=COLORS['text_primary'],
-                           insertbackground=COLORS['text_primary'], relief='flat',
-                           highlightthickness=1, highlightbackground=COLORS['bg_primary'],
-                           highlightcolor=COLORS['accent'])
-            entry.pack(fill=tk.X, pady=(3, 8), ipady=5)
-            setattr(self, attr, entry)
-            
+        # Form kartı
         if self.is_admin:
+            form_card = tk.Frame(parent, bg=COLORS['bg_card'], padx=15, pady=12)
+            form_card.pack(fill=tk.X, pady=(0, 10))
+            
+            tk.Label(form_card, text="➕ Yeni Araç",
+                    font=(FONT_FAMILY, 13, "bold"),
+                    bg=COLORS['bg_card'], fg=COLORS['text_primary']).pack(anchor=tk.W, pady=(0, 10))
+            
+            for label, attr in [("Plaka", "plaka_entry"), ("Marka", "marka_entry"),
+                                ("Model", "model_entry"), ("Ücret (TL)", "ucret_entry")]:
+                tk.Label(form_card, text=label, font=(FONT_FAMILY, 10),
+                        bg=COLORS['bg_card'], fg=COLORS['text_secondary']).pack(anchor=tk.W)
+                
+                entry = tk.Entry(form_card, font=(FONT_FAMILY, 10), width=22,
+                               bg=COLORS['bg_secondary'], fg=COLORS['text_primary'],
+                               insertbackground=COLORS['text_primary'], relief='flat',
+                               highlightthickness=1, highlightbackground=COLORS['bg_primary'],
+                               highlightcolor=COLORS['accent'])
+                entry.pack(fill=tk.X, pady=(3, 8), ipady=5)
+                setattr(self, attr, entry)
+                
             StyledButton(form_card, "➕ EKLE", self._add_vehicle,
                     COLORS['accent'], '#ffffff', font_size=10, padx=0, pady=8).pack(fill=tk.X, pady=(3, 0))
         
