@@ -64,15 +64,28 @@ python3 main.py
 
 ```
 Car-Rental-py/
-├── main.py             # Ana giriş noktası
-├── gui.py              # Tkinter arayüzü (Ana uygulama, Dialoglar)
-├── auth_gui.py         # Giriş/Kayıt penceresi
-├── rental_service.py   # İş mantığı ve validasyonlar
-├── data_manager.py     # SQLite veri yönetimi
-├── car_rental.db       # Veritabanı dosyası
-├── requirements.txt    # Bağımlılıklar
-├── LICENSE             # MIT Lisansı
-└── README.md
+├── src/                    # Kaynak kodların bulunduğu ana klasör
+│   ├── backend/            # Mantıksal işlemler ve veri yönetimi
+│   │   ├── data_manager.py     # SQLite veritabanı CRUD işlemleri
+│   │   └── rental_service.py   # Kiralama iş mantığı ve validasyonlar
+│   ├── models/             # Veri modelleri (Sınıf tanımlamaları)
+│   │   ├── user.py             # Kullanıcı modeli
+│   │   ├── vehicle.py          # Araç modeli
+│   │   └── rental_history.py   # Kiralama geçmişi modeli
+│   └── ui/                 # Kullanıcı arayüzü (Tkinter) klasörü
+│       ├── dialogs/            # Alt pencere ve diyalog kutuları
+│       │   ├── edit_vehicle_dialog.py
+│       │   ├── rental_dialog.py
+│       │   └── rental_history_dialog.py
+│       ├── auth_gui.py         # Giriş ve Kayıt ekranı
+│       ├── main_gui.py         # Uygulamanın ana yönetim paneli
+│       └── styled_button.py    # Özelleştirilmiş UI bileşenleri
+├── car_rental.db           # SQLite veritabanı dosyası
+├── constants.py            # Proje genelinde kullanılan sabitler
+├── main.py                 # Uygulamanın ana giriş noktası
+├── requirements.txt        # Gerekli kütüphanelerin listesi
+├── LICENSE                 # Lisans dosyası
+└── README.md               # Proje dökümantasyonu
 ```
 
 ## Teknolojiler
