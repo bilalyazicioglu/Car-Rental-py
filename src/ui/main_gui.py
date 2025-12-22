@@ -258,7 +258,14 @@ class CarRentalApp:
         status = tk.Frame(parent, bg=COLORS['bg_secondary'], padx=15, pady=8)
         status.pack(fill=tk.X, side=tk.BOTTOM)
 
-        self.status_label = tk.Label(status, text="✓ Hazır", font=(FONT_FAMILY, 10),
+        # Sol - Kaydet butonu ve durum
+        left_frame = tk.Frame(status, bg=COLORS['bg_secondary'])
+        left_frame.pack(side=tk.LEFT)
+
+        StyledButton(left_frame, "Kaydet", self._manual_save,
+                     COLORS['accent'], '#ffffff', font_size=9, padx=12, pady=4).pack(side=tk.LEFT, padx=(0, 10))
+
+        self.status_label = tk.Label(left_frame, text="✓ Hazır", font=(FONT_FAMILY, 10),
                                      bg=COLORS['bg_secondary'], fg=COLORS['success'])
         self.status_label.pack(side=tk.LEFT)
 
@@ -449,6 +456,15 @@ class CarRentalApp:
     def _show_rental_history(self):
         """Kiralama geçmişi diyaloğunu aç."""
         RentalHistoryDialog(self.root, self.data_manager)
+
+    def _manual_save(self):
+        """Verileri manuel olarak kaydet."""
+        try:
+            self.data_manager.save_vehicles()
+            messagebox.showinfo("✓ Başarılı", "Veriler başarıyla kaydedildi!")
+            self._set_status("Veriler kaydedildi")
+        except Exception as e:
+            messagebox.showerror("✗ Hata", f"Kaydetme hatası: {str(e)}")
 
     def _set_status(self, msg):
         self.status_label.config(text=f"✓ {msg} ({datetime.now().strftime('%H:%M:%S')})")
