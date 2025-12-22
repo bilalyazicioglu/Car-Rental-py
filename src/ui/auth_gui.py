@@ -11,7 +11,7 @@ class AuthWindow(tk.Toplevel):
         self.on_success = on_success
 
         self.title("Giriş")
-        self.geometry("400x300")
+        self.geometry("400x350")
         self.resizable(False, False)
         self.configure(bg=COLORS['bg_primary'])
 
@@ -42,6 +42,12 @@ class AuthWindow(tk.Toplevel):
                                font=("Helvetica", 11), pady=8, cursor="hand2")
         register_btn.pack(fill="x", pady=5)
         register_btn.bind("<Button-1>", lambda e: self.register())
+
+        # Çıkış butonu
+        exit_btn = tk.Label(frame, text="Çıkış Yap", bg=COLORS['danger'], fg=COLORS['text_primary'],
+                           font=("Helvetica", 11), pady=8, cursor="hand2")
+        exit_btn.pack(fill="x", pady=5)
+        exit_btn.bind("<Button-1>", lambda e: self._exit_app())
 
     def login(self):
         username = self.username.get().strip()
@@ -74,3 +80,9 @@ class AuthWindow(tk.Toplevel):
             messagebox.showinfo("Başarılı", "Kayıt tamamlandı, giriş yapabilirsiniz")
         else:
             messagebox.showerror("Hata", "Kayıt başarısız")
+
+    def _exit_app(self):
+        """Uygulamadan çıkış yap."""
+        if messagebox.askyesno("Çıkış", "Uygulamadan çıkmak istiyor musunuz?"):
+            self.dm.cleanup_users_on_exit()
+            self.root.destroy()
