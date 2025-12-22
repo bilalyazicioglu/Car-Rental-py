@@ -83,3 +83,17 @@ class RentalDialog(tk.Toplevel):
         self.bind("<Return>", lambda e: self._on_confirm())
         self.bind("<Escape>", lambda e: self._on_cancel())
         self.customer_entry.focus_set()
+
+    def _on_confirm(self):
+        """Kiralama bilgilerini onayla."""
+        self.result = {
+            'kiralayan': self.customer_entry.get().strip(),
+            'baslangic': self.start_date_entry.get().strip(),
+            'bitis': self.end_date_entry.get().strip()
+        }
+        self.destroy()
+
+    def _on_cancel(self):
+        """İptal et ve pencereyi kapat."""
+        self.result = None
+        self.destroy()
