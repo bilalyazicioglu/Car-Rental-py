@@ -19,6 +19,7 @@ def main():
         CarRentalApp(root, current_user=user)
 
     def on_close():
+        data_manager.cleanup_users_on_exit()
         root.destroy()
 
     root.protocol("WM_DELETE_WINDOW", on_close)
