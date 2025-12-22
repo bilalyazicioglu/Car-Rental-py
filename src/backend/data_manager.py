@@ -175,7 +175,7 @@ class DataManager:
         self.conn.commit()
 
     def get_rental_history(self):
-        c = self.conn.execute("SELECT * FROM rental_history")
+        c = self.conn.execute("SELECT * FROM rental_history ORDER BY id DESC")
         return [
             RentalHistory(
                 row["plaka"],
@@ -202,3 +202,20 @@ class DataManager:
     def get_vehicles_by_status(self, durum: str):
         c = self.conn.execute("SELECT * FROM vehicles WHERE durum=?", (durum,))
         return [Vehicle(**row) for row in map(dict, c.fetchall())]
+
+    def get_rental_history_by_date(self, start_date: str, end_date: str):
+        query = """
+                SELECT * \
+                FROM rental_history
+                WHERE baslangic_tarihi >= ? \
+                  AND baslangic_tarihi <= ?
+                ORDER BY id DESC \
+                """
+        c = self.conn.execute(query, (start_date, end_date))
+        return [
+            RentalHistory(
+                row["plaka"], row["kiralayan"], row["baslangic_tarihi"],
+                row["bitis_tarihi"], row["toplam_ucret"], row["iade_tarihi"]
+            )
+            for row in c.fetchall()
+        ]

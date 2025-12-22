@@ -496,3 +496,11 @@ class CarRentalApp:
         except ImportError:
             from tkinter import messagebox
             messagebox.showerror("Hata","Matplotlib kütüphanesi yüklü değil!\nLütfen 'pip install matplotlib' komutunu çalıştırın.")
+
+    def _open_history_filter(self):
+        from src.ui.dialogs.date_filter_dialog import DateFilterDialog
+        DateFilterDialog(self.root, self._apply_history_filter)
+
+    def _apply_history_filter(self, start, end):
+        filtered_data = self.data_manager.get_rental_history_by_date(start, end)
+        self._update_history_table(filtered_data)
