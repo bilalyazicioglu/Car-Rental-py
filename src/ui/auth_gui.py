@@ -84,5 +84,4 @@ class AuthWindow(tk.Toplevel):
     def _exit_app(self):
         """Uygulamadan Çıkış"""
         if messagebox.askyesno("Çıkış", "Uygulamadan çıkmak istiyor musunuz?"):
-            self.dm.cleanup_users_on_exit()
             self.root.destroy()
