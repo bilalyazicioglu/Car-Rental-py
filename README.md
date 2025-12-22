@@ -9,7 +9,11 @@ Modern ve kullanıcı dostu bir araç kiralama yönetim uygulaması. Python ve T
 - **Kiralama İşlemleri** - Kiralama başlatma ve iade alma
 - **Anlık İstatistikler** - Toplam, müsait, kirada araç sayısı ve gelir
 - **Kiralama Geçmişi** - Tüm kiralama kayıtlarını görüntüleme
+- **Tarih Filtreleme** - Kiralama geçmişini tarihe göre filtreleme
+- **Analitik Grafikler** - Matplotlib ile görsel istatistikler
+- **Raporlama** - Detaylı kiralama raporları
 - **Durum Filtreleme** - Müsait, kirada, bakımda filtreleri
+- **Manuel Kaydetme** - Verileri manuel olarak kaydetme butonu
 - **SQLite Veritabanı** - Kalıcı veri saklama
 - **Modern Arayüz** - Koyu tema, responsive tasarım
 
@@ -26,12 +30,15 @@ cd Car-Rental-py
 python3 --version
 ```
 
-3. Uygulamayı çalıştırın:
+3. Gerekli kütüphaneleri yükleyin:
+```bash
+pip3 install matplotlib --break-system-packages
+```
+
+4. Uygulamayı çalıştırın:
 ```bash
 python3 main.py
 ```
-
-> **Not:** Bu proje sadece Python standart kütüphanelerini kullanır. Ekstra kurulum gerekmez!
 
 ## Varsayılan Giriş
 
@@ -49,7 +56,7 @@ python3 main.py
 
 ### Kiralama Başlatmak
 1. Listeden müsait bir araç seçin
-2. "KIRALA" butonuna tıklayın
+2. "KİRALA" butonuna tıklayın
 3. Müşteri adı ve tarihleri girin
 
 ### Araç İade Almak
@@ -59,6 +66,15 @@ python3 main.py
 ### Kiralama Geçmişi
 1. Sağ üstteki "Geçmiş" butonuna tıklayın
 2. Tüm kiralama kayıtlarını görüntüleyin
+3. Tarih filtreleme ile belirli dönemleri seçin
+
+### Analitik Grafikler
+1. "Analitik" butonuna tıklayın
+2. Matplotlib ile oluşturulmuş görsel istatistikleri görüntüleyin
+
+### Manuel Kaydetme
+1. Sol alt köşedeki "Kaydet" butonuna tıklayın
+2. Veriler veritabanına kaydedilir
 
 ## Proje Yapısı
 
@@ -74,6 +90,8 @@ Car-Rental-py/
 │   │   └── rental_history.py   # Kiralama geçmişi modeli
 │   └── ui/                 # Kullanıcı arayüzü (Tkinter) klasörü
 │       ├── dialogs/            # Alt pencere ve diyalog kutuları
+│       │   ├── analytics_dialog.py   # Analitik grafikler
+│       │   ├── date_filter_dialog.py # Tarih filtreleme
 │       │   ├── edit_vehicle_dialog.py
 │       │   ├── rental_dialog.py
 │       │   └── rental_history_dialog.py
@@ -95,12 +113,13 @@ Car-Rental-py/
 | **Python 3.10+** | Programlama dili |
 | **Tkinter** | GUI framework |
 | **SQLite3** | Veritabanı |
+| **Matplotlib** | Analitik grafikler |
 
 ## Kullanıcı Rolleri
 
 | Rol | Yetkiler |
 |-----|----------|
-| **Admin** | Araç ekleme, düzenleme, silme, kiralama, iade, geçmiş görüntüleme |
+| **Admin** | Araç ekleme, düzenleme, silme, kiralama, iade, geçmiş görüntüleme, analitik, raporlar |
 | **User** | Kiralama, iade, geçmiş görüntüleme |
 
 ## Lisans
