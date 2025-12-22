@@ -132,6 +132,13 @@ class CarRentalApp:
         StyledButton(right_frame, "📊 Raporlar", self._show_reports,
                      COLORS['accent'], '#ffffff', font_size=10, padx=15, pady=8).pack(side=tk.LEFT, padx=(0, 15))
 
+        self.analytics_btn = tk.Label(right_frame, text="📈 Analiz", bg=COLORS['info'],
+                                      fg="white", font=(FONT_FAMILY, 10, "bold"),
+                                      padx=15, pady=8, cursor="hand2")
+        self.analytics_btn.pack(side=tk.LEFT, padx=(0, 15))
+
+        self.analytics_btn.bind("<Button-1>", lambda e: self._show_analytics())
+
         stats = tk.Frame(right_frame, bg=COLORS['bg_primary'])
         stats.pack(side=tk.LEFT)
 
@@ -481,3 +488,11 @@ class CarRentalApp:
     def _show_reports(self):
         from src.ui.dialogs.reports_dialog import ReportsDialog
         ReportsDialog(self.root, self.data_manager)
+
+    def _show_analytics(self):
+        try:
+            from src.ui.dialogs.analytics_dialog import AnalyticsDialog
+            AnalyticsDialog(self.root, self.data_manager)
+        except ImportError:
+            from tkinter import messagebox
+            messagebox.showerror("Hata","Matplotlib kütüphanesi yüklü değil!\nLütfen 'pip install matplotlib' komutunu çalıştırın.")

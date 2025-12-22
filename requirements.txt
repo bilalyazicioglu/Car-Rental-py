@@ -1,4 +1,1 @@
-# Bu proje sadece Python standart kütüphanelerini kullanır.
-# Tkinter Python ile birlikte gelir, ekstra kurulum gerekmez.
-
-# Gerekli Python sürümü: 3.8+
+matplotlib
