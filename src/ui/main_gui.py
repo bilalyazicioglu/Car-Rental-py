@@ -11,6 +11,8 @@ from src.ui.styled_button import StyledButton
 from src.ui.dialogs.edit_vehicle_dialog import EditVehicleDialog
 from src.ui.dialogs.rental_dialog import RentalDialog
 from src.ui.dialogs.rental_history_dialog import RentalHistoryDialog
+from src.ui.dialogs.reports_dialog import ReportsDialog
+
 
 
 class CarRentalApp:
@@ -126,6 +128,9 @@ class CarRentalApp:
         # Kiralama Geçmişi butonu
         StyledButton(right_frame, "📋 Geçmiş", self._show_rental_history,
                      COLORS['info'], '#ffffff', font_size=10, padx=15, pady=8).pack(side=tk.LEFT, padx=(0, 15))
+
+        StyledButton(right_frame, "📊 Raporlar", self._show_reports,
+                     COLORS['accent'], '#ffffff', font_size=10, padx=15, pady=8).pack(side=tk.LEFT, padx=(0, 15))
 
         stats = tk.Frame(right_frame, bg=COLORS['bg_primary'])
         stats.pack(side=tk.LEFT)
@@ -472,3 +477,7 @@ class CarRentalApp:
     def _on_closing(self):
         if messagebox.askyesno("Çıkış", "Çıkmak istiyor musunuz?"):
             self.root.destroy()
+
+    def _show_reports(self):
+        from src.ui.dialogs.reports_dialog import ReportsDialog
+        ReportsDialog(self.root, self.data_manager)
