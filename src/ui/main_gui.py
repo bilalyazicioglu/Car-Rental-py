@@ -471,5 +471,4 @@ class CarRentalApp:
 
     def _on_closing(self):
         if messagebox.askyesno("Çıkış", "Çıkmak istiyor musunuz?"):
-            self.data_manager.cleanup_users_on_exit()
             self.root.destroy()

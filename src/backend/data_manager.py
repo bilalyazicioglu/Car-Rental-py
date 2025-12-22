@@ -199,11 +199,6 @@ class DataManager:
             )
             self.conn.commit()
 
-    def cleanup_users_on_exit(self):
-        cursor = self.conn.cursor()
-        cursor.execute("DELETE FROM users WHERE role != 'admin'")
-        self.conn.commit()
-
     def get_vehicles_by_status(self, durum: str):
         c = self.conn.execute("SELECT * FROM vehicles WHERE durum=?", (durum,))
         return [Vehicle(**row) for row in map(dict, c.fetchall())]
