@@ -12,6 +12,8 @@ from src.ui.dialogs.edit_vehicle_dialog import EditVehicleDialog
 from src.ui.dialogs.rental_dialog import RentalDialog
 from src.ui.dialogs.rental_history_dialog import RentalHistoryDialog
 from src.ui.dialogs.reports_dialog import ReportsDialog
+from src.ui.dialogs.vehicle_info_dialog import VehicleInfoDialog
+from src.ui.dialogs.expiry_notification_dialog import ExpiryNotificationDialog
 
 
 
@@ -43,7 +45,9 @@ class CarRentalApp:
 
     def _initial_load(self):
         self._refresh_vehicle_list()
-        self._set_status("Veriler yüklendi")
+        self._set_status("Veriler yülendi")
+        # Başlangıçta bildirim kontrolü
+        self.root.after(500, self._check_notifications_on_startup)
 
     def _setup_styles(self):
         style = ttk.Style()
@@ -138,6 +142,12 @@ class CarRentalApp:
         self.analytics_btn.pack(side=tk.LEFT, padx=(0, 15))
 
         self.analytics_btn.bind("<Button-1>", lambda e: self._show_analytics())
+
+        # Bildirim butonu - sadece admin
+        if self.is_admin:
+            self.notification_btn = StyledButton(right_frame, "Bildirimler", self._show_notifications,
+                         COLORS['warning'], '#ffffff', font_size=10, padx=15, pady=8)
+            self.notification_btn.pack(side=tk.LEFT, padx=(0, 15))
 
         stats = tk.Frame(right_frame, bg=COLORS['bg_primary'])
         stats.pack(side=tk.LEFT)
@@ -254,6 +264,7 @@ class CarRentalApp:
 
         if self.is_admin:
             buttons.extend([
+                ("ℹ️ BİLGİ", self._show_vehicle_info, COLORS['info'], "info"),
                 ("✏️ DÜZENLE", self._edit_vehicle, COLORS['info'], "edit"),
                 ("🗑️ SİL", self._delete_vehicle, COLORS['danger'], "delete"),
             ])
@@ -347,6 +358,7 @@ class CarRentalApp:
             self.action_buttons['return'].enable()
 
         if self.is_admin:
+            self.action_buttons['info'].enable()
             self.action_buttons['edit'].enable()
 
             if vehicle.durum == "müsait":
@@ -381,15 +393,24 @@ class CarRentalApp:
         self.root.wait_window(dialog)
 
         if dialog.result:
+            # Sigorta/Kasko tarih kontrolü
+            bitis_tarihi = dialog.result['bitis']
+            insurance_error = self._check_insurance_for_rental(v, bitis_tarihi)
+            if insurance_error:
+                # Başarısız kiralama kaydı ekle
+                self.data_manager.add_failed_rental(v.plaka, v.marka, v.model, insurance_error)
+                messagebox.showerror("Kiralama Başarısız", insurance_error)
+                return
+            
             ok, msg, _ = self.rental_service.start_rental(
                 plaka, dialog.result['kiralayan'],
                 dialog.result['baslangic'], dialog.result['bitis'])
 
             if ok:
-                messagebox.showinfo("✓ Başarılı", msg)
+                messagebox.showinfo("Başarılı", msg)
                 self._refresh_vehicle_list()
             else:
-                messagebox.showerror("✗ Hata", msg)
+                messagebox.showerror("Hata", msg)
 
     def _end_rental(self):
         sel = self.tree.selection()
@@ -428,6 +449,23 @@ class CarRentalApp:
                 self._refresh_vehicle_list()
             else:
                 messagebox.showerror("✗ Hata", msg)
+
+    def _show_vehicle_info(self):
+        """Araç sigorta/kasko bilgi diyalogunu aç."""
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showwarning("Uyarı", "Bir araç seçin!")
+            return
+
+        plaka = self.tree.item(sel[0])['values'][0]
+        v = self.data_manager.get_vehicle_by_plaka(plaka)
+        if not v:
+            return
+
+        dialog = VehicleInfoDialog(self.root, v, self.data_manager)
+        self.root.wait_window(dialog)
+        # Refresh to show any updates
+        self._refresh_vehicle_list()
 
     def _delete_vehicle(self):
         sel = self.tree.selection()
@@ -504,3 +542,66 @@ class CarRentalApp:
     def _apply_history_filter(self, start, end):
         filtered_data = self.data_manager.get_rental_history_by_date(start, end)
         self._update_history_table(filtered_data)
+
+    def _show_notifications(self):
+        """Bildirim diyalogunu aç."""
+        expiry_data = self.data_manager.get_expiring_vehicles()
+        expiry_data['failed_rentals'] = self.data_manager.get_failed_rentals()
+        ExpiryNotificationDialog(self.root, expiry_data, self.data_manager)
+
+    def _check_notifications_on_startup(self):
+        """Başlangıçta bildirim kontrolü yap, varsa uyar (sadece admin)."""
+        if not self.is_admin:
+            return
+            
+        expiry_data = self.data_manager.get_expiring_vehicles()
+        total = len(expiry_data.get('expired', [])) + len(expiry_data.get('expiring_soon', []))
+        
+        if total > 0:
+            # Bildirim butonunu kırmızı yap
+            self.notification_btn.configure(bg=COLORS['danger'])
+            messagebox.showwarning(
+                "Dikkat",
+                f"{total} adet sigorta/kasko bildirimi var!\nBildirimler butonuna tıklayarak detayları görebilirsiniz."
+            )
+
+    def _check_insurance_for_rental(self, vehicle, rental_end_date):
+        """Kiralama bitiş tarihine göre sigorta/kasko kontrolü yap.
+        
+        Returns:
+            str | None: Hata mesajı veya None (geçerli ise)
+        """
+        from datetime import datetime
+        
+        try:
+            rental_end = datetime.strptime(rental_end_date, "%Y-%m-%d").date()
+        except ValueError:
+            return None  # Geçersiz tarih formatı, diğer kontrollere bırak
+        
+        errors = []
+        
+        # Sigorta kontrolü
+        if vehicle.sigorta_bitis:
+            try:
+                sigorta_date = datetime.strptime(vehicle.sigorta_bitis, "%Y-%m-%d").date()
+                if sigorta_date < rental_end:
+                    errors.append(f"Sigorta bitiş tarihi ({vehicle.sigorta_bitis}) kiralama süresini kapsamamıyor.")
+            except ValueError:
+                pass
+        else:
+            errors.append("Araç sigortası tanımlanmamış.")
+        
+        # Kasko kontrolü
+        if vehicle.kasko_bitis:
+            try:
+                kasko_date = datetime.strptime(vehicle.kasko_bitis, "%Y-%m-%d").date()
+                if kasko_date < rental_end:
+                    errors.append(f"Kasko bitiş tarihi ({vehicle.kasko_bitis}) kiralama süresini kapsamamıyor.")
+            except ValueError:
+                pass
+        else:
+            errors.append("Araç kaskosu tanımlanmamış.")
+        
+        if errors:
+            return "\n".join(errors)
+        return None

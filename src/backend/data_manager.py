@@ -52,9 +52,16 @@ class DataManager:
                       baslangic_tarihi
                       TEXT,
                       bitis_tarihi
+                      TEXT,
+                      sigorta_bitis
+                      TEXT,
+                      kasko_bitis
                       TEXT
                   )
                   """)
+        
+        # Migration: Eski tabloya sigorta_bitis ve kasko_bitis sütunlarını ekle
+        self._migrate_vehicles_table()
 
         c.execute("""
                   CREATE TABLE IF NOT EXISTS rental_history
@@ -79,6 +86,32 @@ class DataManager:
                   )
                   """)
 
+        # Başarısız kiralama bildirimleri tablosu
+        c.execute("""
+                  CREATE TABLE IF NOT EXISTS failed_rentals
+                  (
+                      id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      plaka TEXT,
+                      marka TEXT,
+                      model TEXT,
+                      tarih TEXT,
+                      sebep TEXT
+                  )
+                  """)
+
+        self.conn.commit()
+
+    def _migrate_vehicles_table(self):
+        """Eski tabloya yeni sütunları ekle."""
+        c = self.conn.cursor()
+        try:
+            c.execute("ALTER TABLE vehicles ADD COLUMN sigorta_bitis TEXT")
+        except sqlite3.OperationalError:
+            pass  # Sütun zaten var
+        try:
+            c.execute("ALTER TABLE vehicles ADD COLUMN kasko_bitis TEXT")
+        except sqlite3.OperationalError:
+            pass  # Sütun zaten var
         self.conn.commit()
 
     # ---------- USERS ----------
@@ -118,10 +151,10 @@ class DataManager:
 
         self.conn.execute("""
                           INSERT INTO vehicles (plaka, marka, model, ucret, durum, kiralayan, baslangic_tarihi,
-                                                bitis_tarihi)
-                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                                bitis_tarihi, sigorta_bitis, kasko_bitis)
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                           """, (v.plaka, v.marka, v.model, v.ucret, v.durum, v.kiralayan, v.baslangic_tarihi,
-                                v.bitis_tarihi))
+                                v.bitis_tarihi, v.sigorta_bitis, v.kasko_bitis))
         self.conn.commit()
         return True
 
@@ -136,7 +169,7 @@ class DataManager:
 
     def update_vehicle(self, plaka: str, data: dict):
         """Araç bilgilerini günceller. data dict içinde güncellenecek alanlar olmalı."""
-        allowed_fields = ['marka', 'model', 'ucret', 'durum', 'kiralayan', 'baslangic_tarihi', 'bitis_tarihi']
+        allowed_fields = ['marka', 'model', 'ucret', 'durum', 'kiralayan', 'baslangic_tarihi', 'bitis_tarihi', 'sigorta_bitis', 'kasko_bitis']
         updates = []
         values = []
         for key, value in data.items():
@@ -219,3 +252,68 @@ class DataManager:
             )
             for row in c.fetchall()
         ]
+
+    def get_expiring_vehicles(self, days_threshold: int = 30):
+        """Sigorta veya kasko süresi yaklaşan/geçen araçları getir.
+        
+        Returns:
+            dict: {'expired': [...], 'expiring_soon': [...]} formatında araç listeleri
+        """
+        from datetime import datetime, timedelta
+        
+        today = datetime.now().date()
+        threshold_date = today + timedelta(days=days_threshold)
+        
+        vehicles = self.get_all_vehicles()
+        expired = []
+        expiring_soon = []
+        
+        for v in vehicles:
+            # Sigorta kontrolü
+            if v.sigorta_bitis:
+                try:
+                    sigorta_date = datetime.strptime(v.sigorta_bitis, "%Y-%m-%d").date()
+                    if sigorta_date < today:
+                        expired.append({'vehicle': v, 'type': 'Sigorta', 'date': v.sigorta_bitis})
+                    elif sigorta_date <= threshold_date:
+                        expiring_soon.append({'vehicle': v, 'type': 'Sigorta', 'date': v.sigorta_bitis})
+                except ValueError:
+                    pass
+            
+            # Kasko kontrolü
+            if v.kasko_bitis:
+                try:
+                    kasko_date = datetime.strptime(v.kasko_bitis, "%Y-%m-%d").date()
+                    if kasko_date < today:
+                        expired.append({'vehicle': v, 'type': 'Kasko', 'date': v.kasko_bitis})
+                    elif kasko_date <= threshold_date:
+                        expiring_soon.append({'vehicle': v, 'type': 'Kasko', 'date': v.kasko_bitis})
+                except ValueError:
+                    pass
+        
+        return {'expired': expired, 'expiring_soon': expiring_soon}
+
+    def add_failed_rental(self, plaka: str, marka: str, model: str, sebep: str):
+        """Başarısız kiralama kaydı ekle."""
+        from datetime import datetime
+        tarih = datetime.now().strftime("%Y-%m-%d %H:%M")
+        self.conn.execute("""
+            INSERT INTO failed_rentals (plaka, marka, model, tarih, sebep)
+            VALUES (?, ?, ?, ?, ?)
+        """, (plaka, marka, model, tarih, sebep))
+        self.conn.commit()
+
+    def get_failed_rentals(self):
+        """Başarısız kiralama kayıtlarını getir."""
+        c = self.conn.execute("SELECT * FROM failed_rentals ORDER BY id DESC LIMIT 50")
+        return [dict(row) for row in c.fetchall()]
+
+    def clear_failed_rentals(self):
+        """Tüm başarısız kiralama kayıtlarını temizle."""
+        self.conn.execute("DELETE FROM failed_rentals")
+        self.conn.commit()
+
+    def delete_failed_rental(self, rental_id: int):
+        """Tek bir başarısız kiralama kaydını sil."""
+        self.conn.execute("DELETE FROM failed_rentals WHERE id=?", (rental_id,))
+        self.conn.commit()
