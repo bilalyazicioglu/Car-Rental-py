@@ -337,6 +337,8 @@ class CarRentalApp:
 
         today = datetime.now().date()
 
+        # Araçları durum bilgisiyle birlikte hazırla
+        vehicle_list = []
         for v in vehicles:
             # Sigorta/Kasko tarih kontrolü - geçmiş veya tanımlanmamış ise bakımda göster
             display_durum = v.durum
@@ -369,6 +371,20 @@ class CarRentalApp:
                 if needs_maintenance:
                     display_durum = "bakımda"
             
+            vehicle_list.append((v, display_durum))
+        
+        # Sıralama: kirada (0) > müsait (1) > bakımda (2)
+        def get_priority(item):
+            d = item[1].lower()
+            if d == "kirada":
+                return 0
+            elif d == "müsait":
+                return 1
+            return 2
+        
+        vehicle_list.sort(key=get_priority)
+        
+        for v, display_durum in vehicle_list:
             self.tree.insert("", tk.END, values=(
                 v.plaka, v.marka, v.model,
                 f"{v.ucret:,.0f}₺", display_durum.capitalize(),
