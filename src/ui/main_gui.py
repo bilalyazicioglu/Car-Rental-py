@@ -650,7 +650,7 @@ class CarRentalApp:
             try:
                 sigorta_date = datetime.strptime(vehicle.sigorta_bitis, "%Y-%m-%d").date()
                 if sigorta_date < rental_end:
-                    errors.append(f"Sigorta bitiş tarihi ({vehicle.sigorta_bitis}) kiralama süresini kapsamamıyor.")
+                    errors.append(f"Sigorta bitiş tarihi ({vehicle.sigorta_bitis}) kiralama süresini kapsamıyor.")
             except ValueError:
                 pass
         else:
@@ -661,7 +661,7 @@ class CarRentalApp:
             try:
                 kasko_date = datetime.strptime(vehicle.kasko_bitis, "%Y-%m-%d").date()
                 if kasko_date < rental_end:
-                    errors.append(f"Kasko bitiş tarihi ({vehicle.kasko_bitis}) kiralama süresini kapsamamıyor.")
+                    errors.append(f"Kasko bitiş tarihi ({vehicle.kasko_bitis}) kiralama süresini kapsamıyor.")
             except ValueError:
                 pass
         else:
