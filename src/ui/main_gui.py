@@ -130,18 +130,19 @@ class CarRentalApp:
         right_frame.pack(side=tk.RIGHT)
 
         # Kiralama Geçmişi butonu
-        StyledButton(right_frame, "📋 Geçmiş", self._show_rental_history,
-                     COLORS['info'], '#ffffff', font_size=10, padx=15, pady=8).pack(side=tk.LEFT, padx=(0, 15))
+        if self.is_admin:
+            StyledButton(right_frame, "📋 Geçmiş", self._show_rental_history,
+                         COLORS['info'], '#ffffff', font_size=10, padx=15, pady=8).pack(side=tk.LEFT, padx=(0, 15))
 
-        StyledButton(right_frame, "📊 Raporlar", self._show_reports,
-                     COLORS['accent'], '#ffffff', font_size=10, padx=15, pady=8).pack(side=tk.LEFT, padx=(0, 15))
+            StyledButton(right_frame, "📊 Raporlar", self._show_reports,
+                         COLORS['accent'], '#ffffff', font_size=10, padx=15, pady=8).pack(side=tk.LEFT, padx=(0, 15))
 
-        self.analytics_btn = tk.Label(right_frame, text="📈 Analiz", bg=COLORS['info'],
+            self.analytics_btn = tk.Label(right_frame, text="📈 Analiz", bg=COLORS['info'],
                                       fg="white", font=(FONT_FAMILY, 10, "bold"),
                                       padx=15, pady=8, cursor="hand2")
-        self.analytics_btn.pack(side=tk.LEFT, padx=(0, 15))
+            self.analytics_btn.pack(side=tk.LEFT, padx=(0, 15))
 
-        self.analytics_btn.bind("<Button-1>", lambda e: self._show_analytics())
+            self.analytics_btn.bind("<Button-1>", lambda e: self._show_analytics())
 
         # Bildirim butonu - sadece admin
         if self.is_admin:
