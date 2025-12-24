@@ -34,7 +34,7 @@ class RentalDialog(tk.Toplevel):
         main.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
 
         # Başlık
-        tk.Label(main, text="🚗 Kiralama Bilgileri",
+        tk.Label(main, text="Kiralama Bilgileri",
                  font=(FONT_FAMILY, 18, "bold"),
                  bg=COLORS['bg_primary'], fg=COLORS['text_primary']).pack(pady=(0, 10))
 
