@@ -154,10 +154,11 @@ class CarRentalApp:
         stats.pack(side=tk.LEFT)
 
         self.stat_labels = {}
+        
+        # Temel istatistikler - herkese görünür
         for key, label, color in [('toplam', 'Toplam', COLORS['info']),
                                   ('musait', 'Müsait', COLORS['success']),
-                                  ('kirada', 'Kirada', COLORS['warning']),
-                                  ('gelir', 'Gelir', COLORS['accent'])]:
+                                  ('kirada', 'Kirada', COLORS['warning'])]:
             card = tk.Frame(stats, bg=COLORS['bg_card'], padx=12, pady=8)
             card.pack(side=tk.LEFT, padx=4)
 
@@ -168,6 +169,19 @@ class CarRentalApp:
                            bg=COLORS['bg_card'], fg=color)
             lbl.pack()
             self.stat_labels[key] = lbl
+
+        # Gelir kartı - sadece admin
+        if self.is_admin:
+            card = tk.Frame(stats, bg=COLORS['bg_card'], padx=12, pady=8)
+            card.pack(side=tk.LEFT, padx=4)
+
+            tk.Label(card, text='Gelir', font=(FONT_FAMILY, 9),
+                     bg=COLORS['bg_card'], fg=COLORS['text_secondary']).pack()
+
+            lbl = tk.Label(card, text="0", font=(FONT_FAMILY, 14, "bold"),
+                           bg=COLORS['bg_card'], fg=COLORS['accent'])
+            lbl.pack()
+            self.stat_labels['gelir'] = lbl
 
     def _create_form_panel(self, parent):
         # Form kartı
@@ -336,7 +350,8 @@ class CarRentalApp:
         self.stat_labels['toplam'].config(text=str(s['toplam_arac']))
         self.stat_labels['musait'].config(text=str(s['musait_arac']))
         self.stat_labels['kirada'].config(text=str(s['kirada_arac']))
-        self.stat_labels['gelir'].config(text=f"{s['toplam_gelir']:,.0f}₺")
+        if self.is_admin:
+            self.stat_labels['gelir'].config(text=f"{s['toplam_gelir']:,.0f}₺")
 
     def _on_selection_change(self, event):
         sel = self.tree.selection()
