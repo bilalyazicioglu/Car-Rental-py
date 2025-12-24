@@ -83,15 +83,23 @@ class RentalService:
         if not is_valid:
             return False, error_msg
 
+        #3 ay sonrasi sigorta ve kasko bitis tarihi
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        three_months_later = today + timedelta(days=90)
+        insurance_date = three_months_later.strftime("%Y-%m-%d")
+
         vehicle = Vehicle(
             plaka=plaka.strip().upper(),
             marka=marka.strip(),
             model=model.strip(),
-            ucret=float(ucret)
+            ucret=float(ucret),
+            sigorta_bitis=insurance_date,
+            kasko_bitis=insurance_date
         )
 
         if self.data_manager.add_vehicle(vehicle):
-            return True, f"'{vehicle.plaka}' plakalı araç başarıyla eklendi!"
+            return True, f"'{vehicle.plaka}' plakalı araç başarıyla eklendi! (Sigorta/Kasko: {insurance_date})"
         else:
             return False, "Araç eklenirken bir hata oluştu!"
 
