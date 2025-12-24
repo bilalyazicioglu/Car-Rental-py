@@ -335,10 +335,43 @@ class CarRentalApp:
         else:
             vehicles = self.data_manager.get_vehicles_by_status("bakımda")
 
+        today = datetime.now().date()
+
         for v in vehicles:
+            # Sigorta/Kasko tarih kontrolü - geçmiş veya tanımlanmamış ise bakımda göster
+            display_durum = v.durum
+            
+            if v.durum != "kirada":  # Kirada olan araçları değiştirme
+                needs_maintenance = False
+                
+                # Sigorta kontrolü
+                if not v.sigorta_bitis:
+                    needs_maintenance = True
+                else:
+                    try:
+                        sigorta_date = datetime.strptime(v.sigorta_bitis, "%Y-%m-%d").date()
+                        if sigorta_date < today:
+                            needs_maintenance = True
+                    except ValueError:
+                        needs_maintenance = True
+                
+                # Kasko kontrolü
+                if not v.kasko_bitis:
+                    needs_maintenance = True
+                else:
+                    try:
+                        kasko_date = datetime.strptime(v.kasko_bitis, "%Y-%m-%d").date()
+                        if kasko_date < today:
+                            needs_maintenance = True
+                    except ValueError:
+                        needs_maintenance = True
+                
+                if needs_maintenance:
+                    display_durum = "bakımda"
+            
             self.tree.insert("", tk.END, values=(
                 v.plaka, v.marka, v.model,
-                f"{v.ucret:,.0f}₺", v.durum.capitalize(),
+                f"{v.ucret:,.0f}₺", display_durum.capitalize(),
                 v.kiralayan or "—"
             ))
 
