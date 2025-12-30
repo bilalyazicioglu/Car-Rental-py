@@ -36,7 +36,6 @@ class StyledButton(tk.Frame):
 
     def _on_enter(self, event):
         if self._state == 'normal':
-            # Rengi biraz açıklaştır
             self.label.config(bg=self._lighten_color(self.bg_color))
 
     def _on_leave(self, event):
@@ -46,7 +45,7 @@ class StyledButton(tk.Frame):
             self.label.config(bg=self.disabled_bg)
 
     def _lighten_color(self, color):
-        """Rengi biraz açıklaştır."""
+        """Rengi açıklaştır."""
         try:
             r = int(color[1:3], 16)
             g = int(color[3:5], 16)
